@@ -1,33 +1,30 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.XR.Interaction.Toolkit.Locomotion.Turning;
 using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
-
-/// <summary>
-/// LUNAR INTERFACE panelinin tüm işlevleri:
-/// Gravity (Ay/Dünya), Light Intensity (slider), Snap Turn (açık/kapalı).
-/// Canvas'a ekleyin, alanları Inspector'dan atayın.
-/// </summary>
 public class LunarPanelController : MonoBehaviour
 {
     [Header("Yerçekimi")]
-    [SerializeField] TMP_Text gravityLabel;
-    const float MoonGravity = -1.62f;
-    const float EarthGravity = -9.81f;
-    bool isMoon = true;
+    [SerializeField] private TMP_Text gravityLabel;
+    private const float MoonGravity = -1.62f;
+    private const float EarthGravity = -9.81f;
+    private bool isMoon = true;
 
     [Header("Işık")]
-    [SerializeField] Light directionalLight;
-    [SerializeField] Slider lightSlider;      // Min 0, Max 1
-    [SerializeField] float maxIntensity = 2f;
+    [SerializeField] private Light directionalLight;
+    [SerializeField] private Slider lightSlider;
+    [SerializeField] private float maxIntensity = 2f;
 
-    [Header("Dönüş (Snap / Continuous)")]
-    [Tooltip("XR Origin altındaki Left ve Right Controller objelerindeki ControllerInputActionManager")]
-    [SerializeField] ControllerInputActionManager[] controllerManagers;
-    [SerializeField] TMP_Text snapTurnLabel;
-    bool snapTurnOn = true;
+    [Header("Dönüş")]
+    [SerializeField] private SnapTurnProvider snapTurnProvider;
+    [SerializeField] private ContinuousTurnProvider continuousTurnProvider;
+    [Tooltip("Left ve Right Controller objelerindeki ControllerInputActionManager")]
+    [SerializeField] private ControllerInputActionManager[] controllerManagers;
+    [SerializeField] private TMP_Text snapTurnLabel;
+    private bool snapTurnOn = true;
 
-    void Start()
+    private void Start()
     {
         ApplyGravity();
         ApplySnapTurn();
@@ -39,39 +36,53 @@ public class LunarPanelController : MonoBehaviour
         }
     }
 
-    // ---- Gravity: Button1 OnClick'e bağlanır ----
+    private void OnDestroy()
+    {
+        if (lightSlider != null)
+        {
+            lightSlider.onValueChanged.RemoveListener(SetLightIntensity);
+        }
+    }
+
     public void ToggleGravity()
     {
         isMoon = !isMoon;
         ApplyGravity();
     }
 
-    void ApplyGravity()
+    private void ApplyGravity()
     {
         Physics.gravity = new Vector3(0f, isMoon ? MoonGravity : EarthGravity, 0f);
         if (gravityLabel != null)
+        {
             gravityLabel.text = isMoon ? "Gravity: MOON" : "Gravity: EARTH";
+        }
     }
 
-    // ---- Light: kod içinden slider'a bağlanıyor, Inspector'da ayrıca bağlamayın ----
     public void SetLightIntensity(float value)
     {
         if (directionalLight != null)
+        {
             directionalLight.intensity = value * maxIntensity;
+        }
     }
 
-    // ---- Snap Turn: Button2 OnClick'e bağlanır ----
     public void ToggleSnapTurn()
     {
         snapTurnOn = !snapTurnOn;
         ApplySnapTurn();
     }
 
-    void ApplySnapTurn()
+    private void ApplySnapTurn()
     {
+        // Input action'ları doğru olana yönlendirir (asıl gerekli kısım)
         foreach (var manager in controllerManagers)
             if (manager != null)
                 manager.smoothTurnEnabled = !snapTurnOn;
+
+        // Ek güvence: aktif olmayan provider tamamen sussun
+        if (snapTurnProvider != null) snapTurnProvider.enabled = snapTurnOn;
+        if (continuousTurnProvider != null) continuousTurnProvider.enabled = !snapTurnOn;
 
         if (snapTurnLabel != null)
             snapTurnLabel.text = snapTurnOn ? "Snap Turn: ON" : "Snap Turn: OFF";
