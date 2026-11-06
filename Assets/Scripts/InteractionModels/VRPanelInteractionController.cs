@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -8,9 +9,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 /// <summary>
-/// Bölüm 2: Mevcut LunarPanel Canvas'ını yeniden kullanarak
-/// XR ray UI / grab / thumbstick zoom / head-gaze reset / menu toggle gösterir.
-/// Var olan LunarPanelController veya buton olaylarını değiştirmez.
+/// XR ray UI / grab / thumbstick zoom / head-gaze reset / menu toggle
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class VRPanelInteractionController : MonoBehaviour
@@ -42,6 +41,13 @@ public sealed class VRPanelInteractionController : MonoBehaviour
     [SerializeField, Min(0.25f)] private float minimumForwardDistance = 1.15f;
     [SerializeField, Min(1.0f)] private float maximumForwardDistance = 4.5f;
     [SerializeField, Range(0.5f, 4.0f)] private float gazeDwellSeconds = 2.0f;
+    
+    [Header("Durum Mesajlari")]
+
+    [SerializeField, Min(0.1f)]
+    private float statusDisplaySeconds = 3f;
+
+    private Coroutine statusHideCoroutine;
 
     private static readonly Color ReadyColor = new Color(0.12f, 0.43f, 0.72f, 0.94f);
     private static readonly Color HoverColor = new Color(0.90f, 0.61f, 0.12f, 0.96f);
@@ -135,13 +141,12 @@ public sealed class VRPanelInteractionController : MonoBehaviour
         }
         if (closeMenuButton != null) closeMenuButton.onClick.AddListener(CloseMenu);
         if (openMenuButton != null) openMenuButton.onClick.AddListener(OpenMenu);
-        if (resetButton != null) resetButton.onClick.AddListener(ResetMenuPosition);
 
         InitializeGazeCircle();
         ResetMenuPosition();
         SetMenuVisible(true);
         SetHandleColor(ReadyColor);
-        SetStatus("MENU HAZIR | Ray ile butonlara bas | Tutamac: Grip");
+        SetStatus("MENU HAZIR");
     }
 
     private void OnDestroy()
@@ -155,7 +160,6 @@ public sealed class VRPanelInteractionController : MonoBehaviour
         }
         if (closeMenuButton != null) closeMenuButton.onClick.RemoveListener(CloseMenu);
         if (openMenuButton != null) openMenuButton.onClick.RemoveListener(OpenMenu);
-        if (resetButton != null) resetButton.onClick.RemoveListener(ResetMenuPosition);
         ReleaseLocomotion();
         if (originalFollowers != null)
         {
@@ -341,7 +345,7 @@ public sealed class VRPanelInteractionController : MonoBehaviour
     private void SuppressLocomotion()
     {
         ReleaseLocomotion();
-        foreach (var component in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+        foreach (var component in FindObjectsByType<MonoBehaviour>())
         {
             if (component == null || !component.enabled || component == this) continue;
             string n = component.GetType().Name;
@@ -417,9 +421,40 @@ public sealed class VRPanelInteractionController : MonoBehaviour
         if (grabHandleImage != null) grabHandleImage.color = color;
     }
 
+    
     private void SetStatus(string message)
     {
-        if (statusText != null) statusText.text = message;
-        Debug.Log("[VR Menu / Bolum 2] " + message, this);
+        if (statusText == null) return;
+
+        // Yeni mesaji goster.
+        statusText.text = message;
+
+        Debug.Log("[VR Menu] " + message, this);
+
+        // Onceki mesajin zamanlayicisini iptal et.
+        if (statusHideCoroutine != null)
+        {
+            StopCoroutine(statusHideCoroutine);
+            statusHideCoroutine = null;
+        }
+
+        // Yeni mesaj icin zamanlayiciyi baslat.
+        if (isActiveAndEnabled)
+        {
+            statusHideCoroutine = StartCoroutine(HideStatusAfterDelay());
+        }
     }
+
+    private IEnumerator HideStatusAfterDelay()
+    {
+        yield return new WaitForSecondsRealtime(statusDisplaySeconds);
+
+        if (statusText != null)
+        {
+            statusText.text = string.Empty;
+        }
+
+        statusHideCoroutine = null;
+    }
+
 }

@@ -929,7 +929,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -1795,6 +1795,7 @@ MonoBehaviour:
   minimumForwardDistance: 1.15
   maximumForwardDistance: 4.5
   gazeDwellSeconds: 2
+  statusDisplaySeconds: 3
 --- !u!1 &855713807
 GameObject:
   m_ObjectHideFlags: 0
@@ -3325,7 +3326,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: RESET  |  2 SN BAK VEYA TIKLA
+  m_text: RESET  |  2 SN BAK
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 08750a3d5d7d32d47be1408465d31095, type: 2}
   m_sharedMaterial: {fileID: 7815249234280968405, guid: 08750a3d5d7d32d47be1408465d31095, type: 2}
