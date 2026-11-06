@@ -1,144 +1,151 @@
-# VR_Spatial_UI_v2 — Lunar Interface
+# VR Spatial UI — Lunar Interface
 
-Sanal Gerçeklik dersi (Grup 2) için geliştirilen, **VR'da İnsan–Bilgisayar Etkileşimi ve Kullanıcı Deneyimi** konulu Unity prototipi. Proje, bir ay yüzeyi temasında **world-space (3B uzayda duran) bir kontrol paneli** üzerinden spatial UI, ışınla (ray) etkileşim ve konfor ayarları kavramlarını tek bir sahnede gösterir.
+**Kocaeli Üniversitesi · Bilişim Sistemleri Mühendisliği · Sanal Gerçeklik Dersi · Grup 2**
 
-> Sunum tarihi: **10.11.2026** · Ders ağırlığı: %70 teori, %15 prototip, %15 demo ve değerlendirme
+VR'da **İnsan–Bilgisayar Etkileşimi ve Kullanıcı Deneyimi** konusunu anlatmak için Unity üzerinde geliştirilmiş, Ay yüzeyi temalı bir **world-space (3B uzaya yerleştirilmiş) arayüz** prototipidir. Tek bir *Lunar Interface* paneli üzerinde çevre ayarları, farklı etkileşim modelleri ve kullanıcıya verilen görsel geri bildirim gösterilir.
 
 ## İçindekiler
 
-- [Proje Hakkında](#proje-hakkında)
-- [Sahne İçeriği](#sahne-içeriği)
-- [Teknik Altyapı](#teknik-altyapı)
-- [Kurulum](#kurulum)
-- [Çalıştırma ve Test](#çalıştırma-ve-test)
-- [Proje Yapısı](#proje-yapısı)
-- [Mevcut Durum ve Yapılacaklar](#mevcut-durum-ve-yapılacaklar)
-- [Karşılaşılan Sorunlar](#karşılaşılan-sorunlar)
-- [Ekip](#ekip)
-- [Kullanılan Üçüncü Taraf Varlıklar](#kullanılan-üçüncü-taraf-varlıklar)
+- [Kapsam](#kapsam)
+- [Teknik altyapı](#teknik-altyapı)
+- [Sahne ve işlevler](#sahne-ve-işlevler)
+- [VR Etkileşim Modelleri](#vr-etkileşim-modelleri)
+- [Kurulum ve çalıştırma](#kurulum-ve-çalıştırma)
+- [Test senaryoları](#test-senaryoları)
+- [Dosya yapısı](#dosya-yapısı)
+- [Kapsam dışı ve dikkat edilmesi gerekenler](#kapsam-dışı-ve-dikkat-edilmesi-gerekenler)
+- [Ekip ve üçüncü taraf kaynaklar](#ekip-ve-üçüncü-taraf-kaynaklar)
 
-## Proje Hakkında
+## Kapsam
 
-Sunumun dört ana başlığı (etkileşim modelleri, spatial UI, ergonomi, motion sickness) için tek bir somut örnek sunmak amacıyla küçük bir demo hazırlandı:
+Projede VR'ın temelleri, etkileşim yöntemleri, spatial UI ve kullanıcı ergonomisi anlatılır. **Uzamsal bir menünün ışın, yakın etkileşim ve bakış ile nasıl kullanılabildiğini** göstermektir.
 
-- **Spatial UI:** 2B bir arayüz (Canvas) 3B uzayda, kullanıcının önünde duran bir panel olarak konumlandırılır.
-- **Etkileşim modeli:** Panel, XR Interaction Toolkit'in ray interactor'ı ile kontrol edilir.
-- **Konfor:** Paneldeki *Snap Turn* seçeneği, motion sickness'ı azaltan döndürme biçimini kullanıcının seçebilmesi fikrini gösterir.
+Mevcut panel şu çevre kontrollerini içerir:
 
-Demo bilerek **tek bir mekanizmaya** odaklanır: *VR içinde bir menü paneli ile ortamı kontrol etmek*.
+- **Gravity: MOON / EARTH:** Unity fizik yerçekimini Ay ve Dünya değerleri arasında değiştirir.
+- **Snap Turn: ON / OFF:** Hazır XR dönüş yöntemlerini değiştirir.
+- **Light Intensity:** Sahnenin yönlü ışık şiddetini slider üzerinden ayarlar.
 
-## Sahne İçeriği
+## Teknik altyapı
 
-Ana sahne: `Assets/Scenes/SampleScene.unity`
+| Bileşen | Kullanım |
+| --- | --- |
+| **Unity 6000.6.7f1** | Proje editörü |
+| **Universal Render Pipeline (URP)** | Render altyapısı |
+| **XR Interaction Toolkit 3.6.1** | XR interactor ve etkileşim bileşenleri |
+| **XR Origin / XR Device Simulator** | Sanal kamera, kontrolcüler ve masaüstü simülasyonu |
+| **Unity Input System** | Kontrolcü tetik, grip ve thumbstick girişleri |
+| **World Space Canvas + uGUI + TextMeshPro** | 3B menü ve yazılar |
+| **Tracked Device Graphic Raycaster / XR UI input** | XR kontrolcü ışınıyla UI kullanımı |
 
-| Öğe | Açıklama |
-|---|---|
-| **XR Origin (XR Rig)** | XR Interaction Toolkit Starter Assets'ten gelen oyuncu rig'i |
-| **XR Device Simulator** | VR gözlüğü olmadan masaüstünde test için |
-| **Canvas (World Space)** | Panel, başlık, buton, slider ve metinleri taşıyan 3B uzaydaki arayüz |
-| **Panel başlığı** | `LUNAR INTERFACE` |
-| **Button1** | `Gravity: Moon / Earth` |
-| **Slider** | `Light Intensity` (0–1 aralığı) |
-| **Button2** | `Snap Turn: ON / OFF` |
-| **Earth / Sphere** | Dünya dokulu küre (`M_Earth.mat`) |
-| **Directional Light** | Sahne ışığı (slider ile kontrol edilmesi planlanan ışık) |
-| **Global Volume** | URP post-processing |
-| **Skybox** | Vibrant Space Skybox 3 |
+XR Device Simulator, fiziksel VR gözlüğü olmadan **geliştirme ve masaüstü demonstrasyonu** içindir. Gerçek cihazda OpenXR/cihaz yapılandırması ayrıca doğrulanmalıdır.
 
-Arayüz yazı tipi: **Orbitron Bold** (TextMeshPro SDF asset olarak eklenmiş).
+## Sahne ve işlevler
 
-## Teknik Altyapı
+Ana sahne: `Assets/Scenes/SampleScene.unity`.
 
-| Bileşen | Sürüm / Not |
-|---|---|
-| Unity | **6000.6.7f1** |
-| Render pipeline | Universal Render Pipeline (URP), PC ve Mobile ayarları ayrı |
-| XR Interaction Toolkit | **3.6.1** (Starter Assets ve XR Device Simulator örnekleri içe aktarılmış) |
-| Input | Unity Input System (`activeInputHandler: 1`) |
-| UI | uGUI + TextMeshPro |
-| Hedef platform | PC (XR Device Simulator ile) · Android minimum SDK 26 ayarlı |
+Öne çıkan sahne nesneleri:
 
-## Kurulum
+| Nesne | Görevi |
+| --- | --- |
+| `XR Origin (XR Rig)` | HMD ve kontrolcü etkileşimleri |
+| `Canvas` / `Panel` | Lunar Interface world-space menüsü |
+| `LunarPanelController` | Gravity, Snap Turn, Light Intensity |
+| `VRPanelInteractionController` | Grab, zoom, gaze reset, aç/kapat, durum geri bildirimi |
+| `VR Tutamac - Grip` | Panelin yakalanması için XR etkileşim alanı |
+| `VR Gaze RESET (2 sn)` | Bakışla veya ray tıklamasıyla menüyü sıfırlama |
+| `VR Panel Kapat` | Ana paneli gizleme |
+| `VR Menüyü Aç (Kalici)` | Panel gizliyken tekrar açma |
+| `VR Etkilesim Durumu` | Hover, grab ve reset gibi işlemleri metinle gösterme |
+
+## VR Etkileşim Modelleri
+
+| Model | Gerçekleştirilen davranış | Geri bildirim |
+| --- | --- | --- |
+| **Ray Casting** | XR kontrolcü ışınıyla Gravity / Snap Turn butonları, Light Intensity slider ve eklenen UI butonlarına erişim | UI hover/press davranışları |
+| **Direct / Grab Interaction** | Panel üzerindeki tutamaç, XR `Select`/Grip ile yakalanır; kontrolcü hareketiyle panel taşınır | Tutamaç hazır/hover/tutuluyor durumlarında renk değiştirir |
+| **Thumbstick ile mesafe ayarı** | Panel tutuluyorken joystick yukarı/aşağı ile kamera-panel mesafesi değiştirilir | Hareket anında durum metni; mesafe sınırı uygulanır |
+| **Head-Gaze / Dwell** | Baş/kamera yönü RESET butonu üzerinde **2 saniye** tutulursa panel varsayılan konuma döner | Butonun merkezinden dışa doğru büyüyen ilerleme dairesi |
+| **Button / Toggle Interaction** | `MENÜYÜ KAPAT` ana paneli gizler; panel dışındaki `MENÜYÜ AÇ` kontrolüyle geri getirir | Panel görünürlüğü değişir |
+| **Visual Feedback** | Gaze efekti, hover renkleri ve durum yazıları etkileşimi görünür kılar | Kullanıcı hedeflemeyi ve işlem sonucunu anlayabilir |
+
+**Teknik notlar:**
+
+- `VRPanelInteractionController.cs`, var olan Canvas'a bağlanır; eski `LunarPanelController.cs` işlevlerine müdahale etmez.
+- Gaze hedefleme, XR kameranın ileri doğrultusundan `Physics.Raycast` kullanır; **gerçek eye tracking değildir**.
+- Gaze süresi dolmadan hedef dışına çıkıldığında ilerleme sıfırlanır. RESET butonuna normal UI tıklamasıyla da sıfırlama yapılabilir.
+- Gaze ilerleme dairesi çalışma sırasında sprite olarak üretilir. Daire `RectMask2D` ile buton alanında tutulur; buton koyu zemin, beyaz yazı ve turkuaz kontur kullanır.
+- Joystick ile mesafe ayarı **tutamaç tutuluyorken** yapılır. Panel mesafesi sınırlandırılır ve tutma boyunca hareket/dönüş sağlayıcıları geçici olarak devre dışı bırakılır.
+- Panel kapatıldığında tüm Canvas kapatılmaz. `MENÜYÜ AÇ` kontrolünün erişilebilir kalması hedeflenir.
+
+## Kurulum ve çalıştırma
 
 1. Depoyu klonlayın:
+
    ```bash
-   git clone <repo-url>
-   cd VR_Spatial_UI_v2
+   git clone https://github.com/merwf/vr-spatial-ui.git
+   cd vr-spatial-ui
    ```
-2. **Unity Hub**'dan **6000.6.7f1** sürümünü kurun (farklı sürüm, paket ve ayar uyumsuzluğuna yol açabilir).
-3. Unity Hub'da **Add → Add project from disk** ile proje klasörünü seçin ve açın.
-4. İlk açılışta Unity paketleri çözümler. Sorun çıkarsa **Window → Package Manager** üzerinden şunların kurulu olduğunu kontrol edin:
-   - XR Interaction Toolkit (3.6.1)
-   - XR Plugin Management
-   - Input System
-   - Universal RP
-   - TextMeshPro / Unity UI
-5. `Assets/Scenes/SampleScene.unity` sahnesini açın.
 
-> **Not:** Depoya yalnızca `Assets/` ve `ProjectSettings/` klasörleri eklenirse `Packages/manifest.json` dosyası da commit edilmelidir; aksi halde paket sürümleri takım üyelerinde farklı çözümlenir.
+2. Unity Hub'dan **6000.6.7f1** sürümüyle projeyi açın.
+3. `Packages/manifest.json` içindeki XR Interaction Toolkit ve diğer paketlerin çözümlendiğini kontrol edin.
+4. `Assets/Scenes/SampleScene.unity` sahnesini açın.
+5. Play Mode'a girin ve XR Device Simulator panelindeki aktif cihaz/tuş ipuçlarını kullanın.
 
-## Çalıştırma ve Test
+**Masaüstü demo kullanım sırası:**
 
-**VR gözlüğü olmadan (önerilen test yolu):**
+1. XR kontrolcüsüyle Gravity / Snap Turn butonlarına basın veya slider'ı kaydırın.
+2. Kontrolcüyü panelin üstündeki **TUTAMAÇ** alanına yöneltin; Grip/Select ile tutun ve kontrolcüyü hareket ettirin.
+3. Panel tutulurken thumbstick dikey hareketiyle menüyü yaklaştırın/uzaklaştırın. Editör testinde alternatif giriş: **PageUp / PageDown**.
+4. HMD'nin bakış yönünü **RESET** butonunda 2 saniye tutun; merkezden büyüyen daireyi ve konum sıfırlamasını gözlemleyin.
+5. `MENÜYÜ KAPAT` ve ardından `MENÜYÜ AÇ` düğmelerini kullanın.
 
-1. `SampleScene` sahnesini açın ve **Play**'e basın.
-2. Sahnedeki **XR Device Simulator** ekran üstü arayüzü, klavye/fare ile baş ve kontrolcü hareketini simüle eder. Tuş atamaları için simülatör penceresindeki ipuçlarına bakın.
-3. Kontrolcü ışınını panele yöneltip butonları ve slider'ı deneyin.
+> Simülatörde giriş eşlemeleri seçili HMD/kontrolcü moduna göre değişebilir. Ekrandaki *XR Device Simulator* kısayol ipuçlarını esas alın. `G` tuşu Grip olarak atanmış olabilir; her kurulumda garanti edilmez.
 
-**VR gözlüğü ile:**
+## Test senaryoları
 
-1. **Edit → Project Settings → XR Plug-in Management** altında cihazınıza uygun sağlayıcıyı (ör. OpenXR) etkinleştirin.
-2. Sahnedeki XR Device Simulator nesnesini kapatın, gözlüğü bağlayıp **Play**'e basın.
+Aşağıdakiler, merge öncesi **Unity Play Mode'da tek tek doğrulanması gereken** kabul kontrolleridir.
 
-## Proje Yapısı
+- [ ] Gravity / Snap Turn / Light Intensity kontrolleri ray ile çalışıyor.
+- [ ] Tutamaç hover durumunda renk değiştiriyor; Grip ile tutulup taşınabiliyor.
+- [ ] Joystick ve PageUp/PageDown, **yalnızca grab sırasında** mesafe ayarlıyor.
+- [ ] RESET'e 2 saniye bakınca merkezden büyüyen efekt tamamlanıyor ve panel sıfırlanıyor.
+- [ ] Bakış hedef dışına çıkınca ilerleme sıfırlanıyor; RESET'e ray ile tıklamak da çalışıyor.
+- [ ] Menü kapatıldıktan sonra `MENÜYÜ AÇ` erişilebilir ve çalışıyor.
+- [ ] Console'da yeni kırmızı hata yok; sahne Play Mode dışında kaydedilmiş.
 
-```
+## Dosya yapısı
+
+Aşağıda Bölüm 2 açısından ilgili olan dosyalar gösterilmiştir; tam `Assets/` yapısı daha kapsamlıdır.
+
+```text
 Assets/
-├── Scenes/                 SampleScene (ana demo sahnesi)
-├── XRI/Settings/           XR Interaction Toolkit ayarları
-├── Samples/
-│   └── XR Interaction Toolkit/3.6.1/
-│       ├── Starter Assets/     XR Origin prefab'ı, örnek UI ve etkileşim prefab'ları
-│       └── XR Device Simulator/
-├── Settings/               URP asset'leri (PC / Mobile), Volume profilleri
-├── Lunar Landscape 3D/     Ay yüzeyi paketi (zemin, kayalar, materyaller)
-├── ParallelCascades/       Starfield skybox paketi
-├── TextMesh Pro/           TMP varsayılan kaynakları
-├── Button1.controller      Buton animator'ü (Gravity)
-├── Button2.controller      Buton animator'ü (Snap Turn)
-├── M_Earth.mat             Dünya materyali
-├── Orbitron-Bold.ttf       Arayüz yazı tipi
-└── InputSystem_Actions.inputactions
-ProjectSettings/            Unity proje ayarları
+├── Scenes/
+│   └── SampleScene.unity                    # Ana sahne; veya ayrı entegrasyon sahnesi
+├── Scripts/
+│   ├── LunarPanelController.cs              # Var olan çevre kontrolleri
+│   ├── ButtonHoverEffect.cs                 # Var olan UI hover desteği
+│   ├── LazyFollowYawOnly.cs                 # Önceki panel takip davranışı
+│   └── InteractionModels/
+│       └── VRPanelInteractionController.cs  # Bölüm 2 runtime etkileşimleri
+├── Samples/XR Interaction Toolkit/3.6.1/    # Starter Assets / XR Device Simulator
+└── ...                                     # Ay yüzeyi, gökyüzü, fontlar, materyaller
+Packages/
+└── manifest.json
+ProjectSettings/
+README.md
 ```
 
-## Mevcut Durum ve Yapılacaklar
+**Sorumluluk sınırı:** Bu branch'te panelin mevcut Gravity, Snap Turn, ışık kontrolü ve diğer ekip üyelerinin çalışmaları korunur. Esas değişiklikler `VRPanelInteractionController.cs`, sahne nesneleri ve bu README'dir.
 
-Yüklenen proje dosyalarına göre durum şöyledir:
+## Kapsam dışı ve dikkat edilmesi gerekenler
 
-- [x] XR Origin, XR Device Simulator ve URP ile çalışan temel VR sahnesi
-- [x] World-space panel: başlık, iki buton ve bir slider yerleşimi
-- [x] Tema: ay yüzeyi paketi, uzay skybox'ı, Dünya küresi, Orbitron yazı tipi
-- [ ] **Butonların ve slider'ın işlevleri:** sahnede özel script ve `OnClick` / `OnValueChanged` bağlantısı bulunmuyor. Planlanan davranışlar:
-  - `Gravity: Moon / Earth` → yerçekimi değerini değiştirmek
-  - `Light Intensity` → Directional Light şiddetini slider ile ayarlamak
-  - `Snap Turn: ON / OFF` → snap turn / continuous turn arasında geçiş
-- [ ] Panelin kullanıcı yüksekliğine ve mesafesine göre konumlandırılması (ergonomi)
-- [ ] İsteğe bağlı: bilek menüsü
-- [ ] Demo yedek planı olarak ekran kaydı
+- **Hand Tracking & Gestures:** XR Hands üzerinden gerçek el takibi ve jest tanıma **uygulanmadı**. Sunumda teorik karşılaştırma yapılabilir.
+- **Eye Tracking:** Gaze örneği gerçek göz izleme değil, **head-gaze** yöntemidir.
+- **Near / Far:** Tutamaç XR `XRSimpleInteractable` ile seçilir; aktif interactor yapılandırmasına göre uzaktan da seçilebilir. *Direct interaction* örneğini göstermek için kontrolcüyü fiziksel olarak yakına getirerek test edin.
+- **Yayına hazır VR build:** Fiziksel cihazlarda doğrulama ve rahatlık/erişilebilirlik testleri ayrıca gerekir.
 
-> Bu bölüm, işlevler bağlandıkça güncellenmelidir.
-
-## Karşılaşılan Sorunlar
-
-Sunumdaki "karşılaştığımız problemler" bölümü için burada kısa notlar tutun:
-
-| Sorun | Çözüm |
-|---|---|
-| _(örnek) Unity / paket sürüm uyuşmazlığı_ | _Herkes 6000.6.7f1 kullanır_ |
-| | |
-
-## Ekip
+## Ekip ve üçüncü taraf kaynaklar
 
 **VR Dersi — Grup 2**
 
@@ -148,14 +155,6 @@ Sunumdaki "karşılaştığımız problemler" bölümü için burada kısa notla
 - Ömer Faruk Sarı
 - Eren Dağlı
 
-Kocaeli Üniversitesi — Bilişim Sistemleri Mühendisliği
+**VR Etkileşim Modelleri:** Ömer Faruk Sarı.
 
-## Kullanılan Üçüncü Taraf Varlıklar
-
-- **Unity XR Interaction Toolkit 3.6.1** — Starter Assets ve XR Device Simulator örnekleri
-- **Lunar Landscape 3D** — ay yüzeyi paketi
-- **Vibrant 4K Starfield Skybox Pack** (ParallelCascades) — skybox
-- **Orbitron** yazı tipi (SIL Open Font License)
-- **TextMesh Pro** — Liberation Sans (SIL OFL)
-
-Her paketin lisans koşulları kendi klasöründeki dokümantasyona tabidir.
+**Kullanılan paket ve varlıklar:** Unity XR Interaction Toolkit 3.6.1 (Starter Assets / XR Device Simulator), Lunar Landscape 3D, Vibrant 4K Starfield Skybox Pack (ParallelCascades), Orbitron yazı tipi, TextMesh Pro ve URP.
