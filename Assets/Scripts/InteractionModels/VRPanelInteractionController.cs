@@ -174,7 +174,7 @@ public sealed class VRPanelInteractionController : MonoBehaviour
 
     private void Update()
     {
-        if (!panelVisible || resetGazeCollider == null || headsetCamera == null)
+        if (!panelVisible || grabbed || resetGazeCollider == null || headsetCamera == null)
         {
             ClearGaze();
             return;
@@ -224,11 +224,23 @@ public sealed class VRPanelInteractionController : MonoBehaviour
             if (other != null) axis = other.ReadValue<Vector2>().y;
         }
 
-        // Editor'de fiziksel VR kumandası olmadan da zoom denenebilir.
         if (Keyboard.current != null)
         {
-            if (Keyboard.current.pageUpKey.isPressed) axis = 1f;
-            if (Keyboard.current.pageDownKey.isPressed) axis = -1f;
+
+            float keyboardAxis = 0f;
+
+            if (Keyboard.current.pageUpKey.isPressed){
+                Debug.Log("Page Up key pressed");
+                keyboardAxis += 1f;
+            }
+
+            if (Keyboard.current.pageDownKey.isPressed){
+                Debug.Log("Page Down key pressed");
+                keyboardAxis -= 1f;
+            }
+
+            if (Mathf.Abs(keyboardAxis) > 0.01f)
+                axis = keyboardAxis;
         }
 
         if (Mathf.Abs(axis) > 0.18f)
@@ -306,6 +318,7 @@ public sealed class VRPanelInteractionController : MonoBehaviour
         gripDepthOffset = 0f;
         selectedThumbstick = FindThumbstickForInteractor(grabbingInteractor);
         grabbed = true;
+        ClearGaze();
         SuppressLocomotion();
         SetHandleColor(GrabColor);
         if (grabHandleText != null) grabHandleText.text = "TUTULUYOR | STICK / PgUp-PgDn";
