@@ -119,6 +119,11 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &101189187 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1767192433, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+  m_PrefabInstance: {fileID: 574216840}
+  m_PrefabAsset: {fileID: 0}
 --- !u!20 &193074831 stripped
 Camera:
   m_CorrespondingSourceObject: {fileID: 1767192439, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
@@ -520,6 +525,7 @@ GameObject:
   - component: {fileID: 501319862}
   - component: {fileID: 501319864}
   - component: {fileID: 501319861}
+  - component: {fileID: 501319865}
   m_Layer: 0
   m_Name: VR Panel Kapat
   m_TagString: Untagged
@@ -647,6 +653,33 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &501319865
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 501319859}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43ae1f1643ade3a4ea68ac7b9db07b02, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::XRButtonFeedback
+  hoverScale: 1.08
+  pressedScale: 0.95
+  speed: 14
+  tintLabel: 1
+  label: {fileID: 0}
+  normalColor: {r: 0.7, g: 0.7, b: 0.7, a: 1}
+  hoverColor: {r: 1, g: 1, b: 1, a: 1}
+  glow: {fileID: 842657326}
+  hoverGlowAlpha: 0.35
+  pressedGlowAlpha: 0.6
+  audioSource: {fileID: 843737721}
+  hoverClip: {fileID: 8300000, guid: f55ba5508a7aef9408d6e259713ff8c0, type: 3}
+  clickClip: {fileID: 8300000, guid: eb73785a5ee418c41acfe8e5a0e9e901, type: 3}
+  volume: 0.5
+  pitchVariation: 0.05
 --- !u!1001 &574216840
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -706,7 +739,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1767192433, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 674903994}
   m_SourcePrefab: {fileID: 100100000, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
 --- !u!1 &673750339
 GameObject:
@@ -850,6 +886,50 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1767192434, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
   m_PrefabInstance: {fileID: 574216840}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &674903994
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101189187}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
 --- !u!1 &700086409
 GameObject:
   m_ObjectHideFlags: 0
@@ -1075,7 +1155,7 @@ GameObject:
   - component: {fileID: 778911417}
   - component: {fileID: 778911416}
   - component: {fileID: 778911420}
-  - component: {fileID: 778911421}
+  - component: {fileID: 778911422}
   m_Layer: 5
   m_Name: Button1
   m_TagString: Untagged
@@ -1210,7 +1290,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
   m_Delegates: []
---- !u!114 &778911421
+--- !u!114 &778911422
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1219,15 +1299,24 @@ MonoBehaviour:
   m_GameObject: {fileID: 778911414}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c8346834c568be140bf14d91cf551b0f, type: 3}
+  m_Script: {fileID: 11500000, guid: 43ae1f1643ade3a4ea68ac7b9db07b02, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ButtonHoverEffect
-  scaleAmount: 1.15
-  speed: 10
+  m_EditorClassIdentifier: Assembly-CSharp::XRButtonFeedback
+  hoverScale: 1.08
+  pressedScale: 0.95
+  speed: 14
+  tintLabel: 1
+  label: {fileID: 0}
   normalColor: {r: 0.7, g: 0.7, b: 0.7, a: 1}
   hoverColor: {r: 1, g: 1, b: 1, a: 1}
-  audioSource: {fileID: 0}
-  hoverClip: {fileID: 0}
+  glow: {fileID: 0}
+  hoverGlowAlpha: 0.35
+  pressedGlowAlpha: 0.6
+  audioSource: {fileID: 843737721}
+  hoverClip: {fileID: 8300000, guid: f55ba5508a7aef9408d6e259713ff8c0, type: 3}
+  clickClip: {fileID: 8300000, guid: 9cc00dd7411d7e54fbff6310177151a9, type: 3}
+  volume: 0.5
+  pitchVariation: 0.05
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -1603,6 +1692,7 @@ GameObject:
   - component: {fileID: 843737718}
   - component: {fileID: 843737719}
   - component: {fileID: 843737720}
+  - component: {fileID: 843737721}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -1683,18 +1773,18 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 843737711}
-  m_LocalRotation: {x: 0.2164396, y: 0, z: 0, w: 0.97629607}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0.16037461, y: -0.022914292, z: 0.01451991, w: 0.9866834}
+  m_LocalPosition: {x: 0, y: 0, z: 0.12098965}
   m_LocalScale: {x: 0.004, y: 0.004, z: 0.004}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 323328862}
   - {fileID: 1584271436}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 25, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 18.49, y: -2.451, z: 1.287}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0.0407839, y: -0.047385573}
   m_SizeDelta: {x: 800, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &843737717
@@ -1796,6 +1886,105 @@ MonoBehaviour:
   maximumForwardDistance: 4.5
   gazeDwellSeconds: 2
   statusDisplaySeconds: 3
+  menuTransitionDuration: 0.22
+  hiddenScaleMultiplier: 0.94
+--- !u!82 &843737721
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 843737711}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &855713807
 GameObject:
   m_ObjectHideFlags: 0
@@ -3026,7 +3215,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0.1000061, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1499846853
@@ -3084,12 +3273,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 19
+  m_fontSize: 20
   m_fontSizeBase: 19
   m_fontWeight: 400
-  m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_enableAutoSizing: 1
+  m_fontSizeMin: 10
+  m_fontSizeMax: 100
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -3141,7 +3330,7 @@ GameObject:
   - component: {fileID: 1584271435}
   - component: {fileID: 1584271433}
   - component: {fileID: 1584271432}
-  - component: {fileID: 1584271434}
+  - component: {fileID: 1584271437}
   m_Layer: 0
   m_Name: "VR Men\xFCy\xFC A\xE7 (Kalici)"
   m_TagString: Untagged
@@ -3223,24 +3412,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &1584271434
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1584271431}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c8346834c568be140bf14d91cf551b0f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ButtonHoverEffect
-  scaleAmount: 1.15
-  speed: 10
-  normalColor: {r: 0.7, g: 0.7, b: 0.7, a: 1}
-  hoverColor: {r: 1, g: 1, b: 1, a: 1}
-  audioSource: {fileID: 0}
-  hoverClip: {fileID: 0}
 --- !u!222 &1584271435
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3269,6 +3440,33 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 560}
   m_SizeDelta: {x: 260, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1584271437
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1584271431}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43ae1f1643ade3a4ea68ac7b9db07b02, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::XRButtonFeedback
+  hoverScale: 1.08
+  pressedScale: 0.95
+  speed: 14
+  tintLabel: 1
+  label: {fileID: 0}
+  normalColor: {r: 0.7, g: 0.7, b: 0.7, a: 1}
+  hoverColor: {r: 1, g: 1, b: 1, a: 1}
+  glow: {fileID: 0}
+  hoverGlowAlpha: 0.35
+  pressedGlowAlpha: 0.6
+  audioSource: {fileID: 843737721}
+  hoverClip: {fileID: 8300000, guid: f55ba5508a7aef9408d6e259713ff8c0, type: 3}
+  clickClip: {fileID: 8300000, guid: 9403b9c06d71d5e4ea96cda01997292b, type: 3}
+  volume: 0.5
+  pitchVariation: 0.05
 --- !u!1 &1621193423
 GameObject:
   m_ObjectHideFlags: 0
@@ -3416,6 +3614,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1639938690}
   - component: {fileID: 1639938691}
+  - component: {fileID: 1639938692}
   m_Layer: 5
   m_Name: Slider
   m_TagString: Untagged
@@ -3497,6 +3696,33 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1639938692
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1639938689}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43ae1f1643ade3a4ea68ac7b9db07b02, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::XRButtonFeedback
+  hoverScale: 1.03
+  pressedScale: 0.95
+  speed: 14
+  tintLabel: 1
+  label: {fileID: 0}
+  normalColor: {r: 0.7, g: 0.7, b: 0.7, a: 1}
+  hoverColor: {r: 1, g: 1, b: 1, a: 1}
+  glow: {fileID: 0}
+  hoverGlowAlpha: 0.35
+  pressedGlowAlpha: 0.6
+  audioSource: {fileID: 843737721}
+  hoverClip: {fileID: 0}
+  clickClip: {fileID: 8300000, guid: 621cba5b2412a4149bd40a171a89116c, type: 3}
+  volume: 0.5
+  pitchVariation: 0.05
 --- !u!114 &1669657125 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5663893676086941514, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
@@ -3656,7 +3882,7 @@ GameObject:
   - component: {fileID: 2054698466}
   - component: {fileID: 2054698465}
   - component: {fileID: 2054698464}
-  - component: {fileID: 2054698467}
+  - component: {fileID: 2054698468}
   m_Layer: 5
   m_Name: Button2
   m_TagString: Untagged
@@ -3778,7 +4004,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2054698462}
   m_CullTransparentMesh: 1
---- !u!114 &2054698467
+--- !u!114 &2054698468
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3787,15 +4013,24 @@ MonoBehaviour:
   m_GameObject: {fileID: 2054698462}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c8346834c568be140bf14d91cf551b0f, type: 3}
+  m_Script: {fileID: 11500000, guid: 43ae1f1643ade3a4ea68ac7b9db07b02, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ButtonHoverEffect
-  scaleAmount: 1.15
-  speed: 10
+  m_EditorClassIdentifier: Assembly-CSharp::XRButtonFeedback
+  hoverScale: 1.08
+  pressedScale: 0.95
+  speed: 14
+  tintLabel: 1
+  label: {fileID: 0}
   normalColor: {r: 0.7, g: 0.7, b: 0.7, a: 1}
   hoverColor: {r: 1, g: 1, b: 1, a: 1}
-  audioSource: {fileID: 0}
-  hoverClip: {fileID: 0}
+  glow: {fileID: 0}
+  hoverGlowAlpha: 0.35
+  pressedGlowAlpha: 0.6
+  audioSource: {fileID: 843737721}
+  hoverClip: {fileID: 8300000, guid: f55ba5508a7aef9408d6e259713ff8c0, type: 3}
+  clickClip: {fileID: 8300000, guid: 9cc00dd7411d7e54fbff6310177151a9, type: 3}
+  volume: 0.5
+  pitchVariation: 0.05
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

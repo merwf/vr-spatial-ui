@@ -67,6 +67,5 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "VR_Spatial_UI_v2.slnx",
     "dotnet.enableWorkspaceBasedDevelopment": false
 }
