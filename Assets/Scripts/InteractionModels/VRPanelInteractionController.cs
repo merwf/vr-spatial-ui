@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -8,9 +9,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 /// <summary>
-/// Bölüm 2: Mevcut LunarPanel Canvas'ını yeniden kullanarak
-/// XR ray UI / grab / thumbstick zoom / head-gaze reset / menu toggle gösterir.
-/// Var olan LunarPanelController veya buton olaylarını değiştirmez.
+/// XR ray UI / grab / thumbstick zoom / head-gaze reset / menu toggle
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class VRPanelInteractionController : MonoBehaviour
@@ -42,10 +41,17 @@ public sealed class VRPanelInteractionController : MonoBehaviour
     [SerializeField, Min(0.25f)] private float minimumForwardDistance = 1.15f;
     [SerializeField, Min(1.0f)] private float maximumForwardDistance = 4.5f;
     [SerializeField, Range(0.5f, 4.0f)] private float gazeDwellSeconds = 2.0f;
+    
+    [Header("Durum Mesajlari")]
 
-    private static readonly Color ReadyColor = new Color(0.12f, 0.43f, 0.72f, 0.94f);
-    private static readonly Color HoverColor = new Color(0.90f, 0.61f, 0.12f, 0.96f);
-    private static readonly Color GrabColor = new Color(0.10f, 0.64f, 0.49f, 0.96f);
+    [SerializeField, Min(0.1f)]
+    private float statusDisplaySeconds = 3f;
+
+    private Coroutine statusHideCoroutine;
+
+    private static readonly Color ReadyColor = new(0.12f, 0.43f, 0.72f, 0.94f);
+    private static readonly Color HoverColor = new (0.90f, 0.61f, 0.12f, 0.96f);
+    private static readonly Color GrabColor = new (0.10f, 0.64f, 0.49f, 0.96f);
 
     private InputAction leftThumbstick;
     private InputAction rightThumbstick;
@@ -65,7 +71,40 @@ public sealed class VRPanelInteractionController : MonoBehaviour
     private Sprite gazeCircleSprite;
     private MonoBehaviour[] originalFollowers;
     private bool[] originalFollowerStates;
-    private readonly List<Behaviour> suppressedLocomotion = new List<Behaviour>();
+    private readonly List<Behaviour> suppressedLocomotion = new();
+
+    #region Reset Panel Smoothness
+    [Header("Reset Animation")]
+    [SerializeField, Min(0.05f)]
+    private float resetAnimationDuration = 0.45f;
+
+    private Coroutine resetAnimationCoroutine;
+    private bool isResetting;
+    private bool grabHandleWasEnabledBeforeReset;
+    #endregion
+    #region Panel Smoothness
+    [Header("Menu Transition")]
+    [SerializeField, Min(0.05f)]
+    private float menuTransitionDuration = 0.5f;
+
+    [SerializeField, Range(0.8f, 1f)]
+    private float hiddenScaleMultiplier = 0.84f;
+
+    private CanvasGroup panelCanvasGroup;
+    private Vector3 panelVisibleScale;
+    private Coroutine menuTransitionCoroutine;
+    private bool originalPanelInteractable;
+    private bool originalPanelBlocksRaycasts;
+
+    private Vector3 hiddenVelocity;
+    #endregion
+
+    #region Feedback
+    private enum HandleState { Ready, Hover, Grabbed }
+    private Color handleTargetColor = new(0.12f, 0.43f, 0.72f, 0.94f);
+    private float handleTargetScale = 1f;
+    private Vector3 handleBaseScale = Vector3.one;
+    #endregion
 
     /// <summary>Editor kurulum aracı referansları sahneye kalıcı olarak bağlar.</summary>
     public void Configure(RectTransform canvas, GameObject panel, Camera camera,
@@ -120,8 +159,8 @@ public sealed class VRPanelInteractionController : MonoBehaviour
         {
             var leftMap = xriInputActions.FindActionMap("XRI Left", false);
             var rightMap = xriInputActions.FindActionMap("XRI Right", false);
-            leftThumbstick = leftMap != null ? leftMap.FindAction("Thumbstick", false) : null;
-            rightThumbstick = rightMap != null ? rightMap.FindAction("Thumbstick", false) : null;
+            leftThumbstick = leftMap?.FindAction("Thumbstick", false);
+            rightThumbstick = rightMap?.FindAction("Thumbstick", false);
             if (leftThumbstick != null && !leftThumbstick.enabled) { leftThumbstick.Enable(); enabledLeftByUs = true; }
             if (rightThumbstick != null && !rightThumbstick.enabled) { rightThumbstick.Enable(); enabledRightByUs = true; }
         }
@@ -135,13 +174,25 @@ public sealed class VRPanelInteractionController : MonoBehaviour
         }
         if (closeMenuButton != null) closeMenuButton.onClick.AddListener(CloseMenu);
         if (openMenuButton != null) openMenuButton.onClick.AddListener(OpenMenu);
-        if (resetButton != null) resetButton.onClick.AddListener(ResetMenuPosition);
 
         InitializeGazeCircle();
         ResetMenuPosition();
+
+        // Initialization of panel smoothness references
+        panelCanvasGroup = existingPanel.GetComponent<CanvasGroup>();
+
+        if (panelCanvasGroup == null)
+            panelCanvasGroup = existingPanel.AddComponent<CanvasGroup>();
+
+        panelVisibleScale = existingPanel.transform.localScale;
+
+        originalPanelInteractable = panelCanvasGroup.interactable;
+        originalPanelBlocksRaycasts = panelCanvasGroup.blocksRaycasts;
+        
         SetMenuVisible(true);
-        SetHandleColor(ReadyColor);
-        SetStatus("MENU HAZIR | Ray ile butonlara bas | Tutamac: Grip");
+        if (grabHandleImage != null) handleBaseScale = grabHandleImage.rectTransform.localScale;
+        SetHandleState(HandleState.Ready);
+        SetStatus("MENU HAZIR");
     }
 
     private void OnDestroy()
@@ -155,7 +206,6 @@ public sealed class VRPanelInteractionController : MonoBehaviour
         }
         if (closeMenuButton != null) closeMenuButton.onClick.RemoveListener(CloseMenu);
         if (openMenuButton != null) openMenuButton.onClick.RemoveListener(OpenMenu);
-        if (resetButton != null) resetButton.onClick.RemoveListener(ResetMenuPosition);
         ReleaseLocomotion();
         if (originalFollowers != null)
         {
@@ -170,13 +220,15 @@ public sealed class VRPanelInteractionController : MonoBehaviour
 
     private void Update()
     {
-        if (!panelVisible || resetGazeCollider == null || headsetCamera == null)
+        AnimateHandle();
+        if (!panelVisible || grabbed || isResetting ||
+            resetGazeCollider == null || headsetCamera == null)
         {
             ClearGaze();
             return;
         }
 
-        Ray ray = new Ray(headsetCamera.transform.position, headsetCamera.transform.forward);
+        Ray ray = new (headsetCamera.transform.position, headsetCamera.transform.forward);
         // Gaze düğmesi Ignore Raycast katmanındadır; XR kontrolcü ışını UI tıklamasını engellemez.
         const int gazeLayerMask = 1 << 2;
         bool focused = Physics.Raycast(ray, out RaycastHit hit, 8f, gazeLayerMask, QueryTriggerInteraction.Collide)
@@ -206,11 +258,13 @@ public sealed class VRPanelInteractionController : MonoBehaviour
         if (!panelVisible)
         {
             // Tekrar aç düğmesi görüş alanında kalsın.
-            ApplyDefaultPose();
+            ApplyDefaultPose(true);
             return;
         }
 
         if (!grabbed || grabbingInteractor == null) return;
+
+        if (isResetting) return;
 
         float axis = selectedThumbstick != null ? selectedThumbstick.ReadValue<Vector2>().y : 0f;
         if (Mathf.Abs(axis) < 0.18f)
@@ -220,23 +274,49 @@ public sealed class VRPanelInteractionController : MonoBehaviour
             if (other != null) axis = other.ReadValue<Vector2>().y;
         }
 
-        // Editor'de fiziksel VR kumandası olmadan da zoom denenebilir.
         if (Keyboard.current != null)
         {
-            if (Keyboard.current.pageUpKey.isPressed) axis = 1f;
-            if (Keyboard.current.pageDownKey.isPressed) axis = -1f;
+
+            float keyboardAxis = 0f;
+
+            if (Keyboard.current.pageUpKey.isPressed){
+                keyboardAxis += 1f;
+            }
+
+            if (Keyboard.current.pageDownKey.isPressed){
+                keyboardAxis -= 1f;
+            }
+
+            if (Mathf.Abs(keyboardAxis) > 0.01f)
+                axis = keyboardAxis;
         }
 
         if (Mathf.Abs(axis) > 0.18f)
             gripDepthOffset -= axis * joystickZoomMetersPerSecond * Time.deltaTime;
 
         Vector3 headForward = HorizontalForward();
-        Vector3 moved = gripStartPanelPosition + grabbingInteractor.position - gripStartInteractorPosition;
-        Vector3 candidate = moved + headForward * gripDepthOffset;
-        float depth = Vector3.Dot(candidate - headsetCamera.transform.position, headForward);
-        float clampedDepth = Mathf.Clamp(depth, minimumForwardDistance, maximumForwardDistance);
-        worldCanvas.position = candidate + headForward * (clampedDepth - depth);
-        // Menü, okunabilir kalsın diye tutulurken kendi etrafında döndürülmüyor.
+
+        Vector3 interactorDelta =
+            grabbingInteractor.position - gripStartInteractorPosition;
+
+        float forwardDelta = Vector3.Dot(interactorDelta, headForward);
+
+        Vector3 candidate =
+            gripStartPanelPosition + headForward * (forwardDelta + gripDepthOffset);
+
+        float depth = Vector3.Dot(
+            candidate - headsetCamera.transform.position,
+            headForward
+        );
+
+        float clampedDepth = Mathf.Clamp(
+            depth,
+            minimumForwardDistance,
+            maximumForwardDistance
+        );
+
+        worldCanvas.position =
+            candidate + headForward * (clampedDepth - depth);
     }
 
     private Vector3 HorizontalForward()
@@ -244,29 +324,199 @@ public sealed class VRPanelInteractionController : MonoBehaviour
         Vector3 v = Vector3.ProjectOnPlane(headsetCamera.transform.forward, Vector3.up);
         return v.sqrMagnitude > 0.001f ? v.normalized : Vector3.forward;
     }
-
-    private void ApplyDefaultPose()
+    
+    private void ApplyDefaultPose(bool smooth = false)
     {
         Vector3 forward = HorizontalForward();
-        worldCanvas.position = headsetCamera.transform.position +
-                               forward * resetForwardDistance + Vector3.up * resetVerticalOffset;
-        worldCanvas.rotation = Quaternion.LookRotation(forward, Vector3.up) *
-                               Quaternion.Euler(resetPitchDegrees, 0f, 0f);
+        Vector3 targetPos = headsetCamera.transform.position +
+                            forward * resetForwardDistance + Vector3.up * resetVerticalOffset;
+        Quaternion targetRot = Quaternion.LookRotation(forward, Vector3.up) *
+                            Quaternion.Euler(resetPitchDegrees, 0f, 0f);
+
+        if (smooth)
+        {
+            worldCanvas.position = Vector3.SmoothDamp(
+                worldCanvas.position, targetPos, ref hiddenVelocity, 0.25f);
+            worldCanvas.rotation = Quaternion.Slerp(
+                worldCanvas.rotation, targetRot, 1f - Mathf.Exp(-8f * Time.unscaledDeltaTime));
+        }
+        else
+        {
+            worldCanvas.SetPositionAndRotation(targetPos, targetRot);
+            hiddenVelocity = Vector3.zero;
+        }
     }
 
     public void ResetMenuPosition()
     {
         EndGrab();
-        if (worldCanvas != null && headsetCamera != null) ApplyDefaultPose();
+
+        if (worldCanvas == null || headsetCamera == null)
+            return;
+
+        // Cancel an existing reset without losing the original handle state.
+        if (resetAnimationCoroutine != null)
+        {
+            StopCoroutine(resetAnimationCoroutine);
+            resetAnimationCoroutine = null;
+
+            if (grabHandle != null)
+                grabHandle.enabled = grabHandleWasEnabledBeforeReset;
+        }
+
+        isResetting = true;
+        ClearGaze();
+
+        if (grabHandle != null)
+        {
+            grabHandleWasEnabledBeforeReset = grabHandle.enabled;
+            grabHandle.enabled = false;
+        }
+
+        resetAnimationCoroutine = StartCoroutine(AnimateMenuReset());
+
+        SetStatus("RESET | Menu varsayilan konuma tasiniyor");
+    }
+    private IEnumerator AnimateMenuReset()
+    {
+        Vector3 startPosition = worldCanvas.position;
+        Quaternion startRotation = worldCanvas.rotation;
+
+        Vector3 forward = HorizontalForward();
+
+        Vector3 targetPosition =
+            headsetCamera.transform.position +
+            forward * resetForwardDistance +
+            Vector3.up * resetVerticalOffset;
+
+        Quaternion targetRotation =
+            Quaternion.LookRotation(forward, Vector3.up) *
+            Quaternion.Euler(resetPitchDegrees, 0f, 0f);
+
+        float elapsed = 0f;
+
+        while (elapsed < resetAnimationDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+
+            float t = Mathf.Clamp01(elapsed / resetAnimationDuration);
+
+            // Smoothstep easing.
+            float eased = t * t * (3f - 2f * t);
+
+            worldCanvas.position = Vector3.Lerp(
+                startPosition,
+                targetPosition,
+                eased
+            );
+
+            worldCanvas.rotation = Quaternion.Slerp(
+                startRotation,
+                targetRotation,
+                eased
+            );
+
+            yield return null;
+        }
+
+        // Ensure the final pose is exact.
+        worldCanvas.SetPositionAndRotation(
+            targetPosition,
+            targetRotation
+        );
+
+        if (grabHandle != null)
+            grabHandle.enabled = grabHandleWasEnabledBeforeReset;
+
+        isResetting = false;
+        resetAnimationCoroutine = null;
+
+        ClearGaze();
+
         SetStatus("RESET | Menu varsayilan konuma getirildi");
     }
 
     private void SetMenuVisible(bool visible)
     {
         panelVisible = visible;
-        if (existingPanel != null) existingPanel.SetActive(visible);
-        if (openMenuButton != null) openMenuButton.gameObject.SetActive(!visible);
-        if (!visible) ClearGaze();
+
+        if (openMenuButton != null)
+            openMenuButton.gameObject.SetActive(!visible);
+
+        if (existingPanel == null) return;
+
+        if (menuTransitionCoroutine != null)
+        {
+            StopCoroutine(menuTransitionCoroutine);
+            menuTransitionCoroutine = null;
+        }
+
+        if (visible)
+        {
+            existingPanel.SetActive(true);
+        }
+        else
+        {
+            ClearGaze();
+        }
+
+        panelCanvasGroup.interactable = false;
+        panelCanvasGroup.blocksRaycasts = false;
+
+        menuTransitionCoroutine = StartCoroutine(
+            AnimatePanelTransition(visible)
+        );
+    }
+
+    private IEnumerator AnimatePanelTransition(bool show)
+    {
+        float startAlpha = panelCanvasGroup.alpha;
+        Vector3 startScale = existingPanel.transform.localScale;
+
+        float targetAlpha = show ? 1f : 0f;
+
+        Vector3 targetScale = show
+            ? panelVisibleScale
+            : panelVisibleScale * hiddenScaleMultiplier;
+
+        float elapsed = 0f;
+
+        while (elapsed < menuTransitionDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+
+            float t = Mathf.Clamp01(
+                elapsed / menuTransitionDuration
+            );
+
+            // Smoothstep easing
+            float eased = t * t * (3f - 2f * t);
+
+            panelCanvasGroup.alpha = Mathf.Lerp(
+                startAlpha, targetAlpha, eased
+            );
+
+            existingPanel.transform.localScale = Vector3.Lerp(
+                startScale, targetScale, eased
+            );
+
+            yield return null;
+        }
+
+        panelCanvasGroup.alpha = targetAlpha;
+        existingPanel.transform.localScale = targetScale;
+
+        if (show)
+        {
+            panelCanvasGroup.interactable = originalPanelInteractable;
+            panelCanvasGroup.blocksRaycasts = originalPanelBlocksRaycasts;
+        }
+        else
+        {
+            existingPanel.SetActive(false);
+        }
+
+        menuTransitionCoroutine = null;
     }
 
     public void CloseMenu()
@@ -284,26 +534,27 @@ public sealed class VRPanelInteractionController : MonoBehaviour
 
     private void OnHoverEnter(HoverEnterEventArgs args)
     {
-        if (!grabbed) SetHandleColor(HoverColor);
+        if (!grabbed) SetHandleState(HandleState.Hover);
         if (!grabbed) SetStatus("HOVER | Tutamac hedeflendi");
     }
 
     private void OnHoverExit(HoverExitEventArgs args)
     {
-        if (!grabbed) SetHandleColor(ReadyColor);
+        if (!grabbed) SetHandleState(HandleState.Ready);
     }
 
     private void OnGrabEnter(SelectEnterEventArgs args)
     {
-        if (!panelVisible || args.interactorObject == null) return;
+        if (isResetting || !panelVisible || args.interactorObject == null) return;
         grabbingInteractor = args.interactorObject.transform;
         gripStartInteractorPosition = grabbingInteractor.position;
         gripStartPanelPosition = worldCanvas.position;
         gripDepthOffset = 0f;
         selectedThumbstick = FindThumbstickForInteractor(grabbingInteractor);
         grabbed = true;
+        ClearGaze();
         SuppressLocomotion();
-        SetHandleColor(GrabColor);
+        SetHandleState(HandleState.Grabbed);
         if (grabHandleText != null) grabHandleText.text = "TUTULUYOR | STICK / PgUp-PgDn";
         SetStatus("DIRECT GRAB | Kumandayi hareket ettir, stick ile mesafeyi ayarla");
     }
@@ -321,7 +572,7 @@ public sealed class VRPanelInteractionController : MonoBehaviour
             if (current.name.IndexOf("left", StringComparison.OrdinalIgnoreCase) >= 0) return leftThumbstick;
             if (current.name.IndexOf("right", StringComparison.OrdinalIgnoreCase) >= 0) return rightThumbstick;
         }
-        return rightThumbstick != null ? rightThumbstick : leftThumbstick;
+        return rightThumbstick ?? leftThumbstick;
     }
 
     private void EndGrab()
@@ -332,7 +583,7 @@ public sealed class VRPanelInteractionController : MonoBehaviour
         selectedThumbstick = null;
         gripDepthOffset = 0f;
         ReleaseLocomotion();
-        SetHandleColor(ReadyColor);
+        SetHandleState(HandleState.Ready);
         if (grabHandleText != null) grabHandleText.text = "TUTAMAC | GRIP ILE TUT";
     }
 
@@ -341,7 +592,7 @@ public sealed class VRPanelInteractionController : MonoBehaviour
     private void SuppressLocomotion()
     {
         ReleaseLocomotion();
-        foreach (var component in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+        foreach (var component in FindObjectsByType<MonoBehaviour>())
         {
             if (component == null || !component.enabled || component == this) continue;
             string n = component.GetType().Name;
@@ -364,10 +615,12 @@ public sealed class VRPanelInteractionController : MonoBehaviour
     {
         if (gazeProgressFill == null) return;
         const int textureSize = 128;
-        gazeCircleTexture = new Texture2D(textureSize, textureSize, TextureFormat.RGBA32, false);
-        gazeCircleTexture.name = "VR Gaze Soft Circle (Runtime)";
-        gazeCircleTexture.filterMode = FilterMode.Bilinear;
-        gazeCircleTexture.wrapMode = TextureWrapMode.Clamp;
+        gazeCircleTexture = new(textureSize, textureSize, TextureFormat.RGBA32, false)
+        {
+            name = "VR Gaze Soft Circle (Runtime)",
+            filterMode = FilterMode.Bilinear,
+            wrapMode = TextureWrapMode.Clamp
+        };
         Color32[] pixels = new Color32[textureSize * textureSize];
         for (int y = 0; y < textureSize; y++)
         {
@@ -412,14 +665,59 @@ public sealed class VRPanelInteractionController : MonoBehaviour
         UpdateGazeCircle(0f);
     }
 
-    private void SetHandleColor(Color color)
+   private void SetHandleState(HandleState state)
     {
-        if (grabHandleImage != null) grabHandleImage.color = color;
+        switch (state)
+        {
+            case HandleState.Ready:   handleTargetColor = ReadyColor; handleTargetScale = 1.00f; break;
+            case HandleState.Hover:   handleTargetColor = HoverColor; handleTargetScale = 1.05f; break;
+            case HandleState.Grabbed: handleTargetColor = GrabColor;  handleTargetScale = 1.10f; break;
+        }
     }
 
+    private void AnimateHandle()
+    {
+        if (grabHandleImage == null) return;
+        float k = 1f - Mathf.Exp(-14f * Time.unscaledDeltaTime);
+        grabHandleImage.color = Color.Lerp(grabHandleImage.color, handleTargetColor, k);
+        var rt = grabHandleImage.rectTransform;
+        rt.localScale = Vector3.Lerp(rt.localScale, handleBaseScale * handleTargetScale, k);
+    }
+
+    
     private void SetStatus(string message)
     {
-        if (statusText != null) statusText.text = message;
-        Debug.Log("[VR Menu / Bolum 2] " + message, this);
+        if (statusText == null) return;
+
+        // Yeni mesaji goster.
+        statusText.text = message;
+
+        Debug.Log("[VR Menu] " + message, this);
+
+        // Onceki mesajin zamanlayicisini iptal et.
+        if (statusHideCoroutine != null)
+        {
+            StopCoroutine(statusHideCoroutine);
+            statusHideCoroutine = null;
+        }
+
+        // Yeni mesaj icin zamanlayiciyi baslat.
+        if (isActiveAndEnabled)
+        {
+            statusHideCoroutine = StartCoroutine(HideStatusAfterDelay());
+        }
     }
+
+    private IEnumerator HideStatusAfterDelay()
+    {
+        yield return new WaitForSecondsRealtime(statusDisplaySeconds);
+
+        if (statusText != null)
+        {
+            statusText.text = string.Empty;
+        }
+
+        statusHideCoroutine = null;
+    }
+
 }

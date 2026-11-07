@@ -71,7 +71,6 @@ public class LazyFollowYawOnly : MonoBehaviour
         Vector3 targetPos = targetCamera.position + (cameraForward * distance);
         targetPos.y = targetCamera.position.y + heightOffset;
 
-        transform.position = targetPos;
-        transform.rotation = Quaternion.LookRotation(cameraForward, Vector3.up);
+        transform.SetPositionAndRotation(targetPos, Quaternion.LookRotation(cameraForward, Vector3.up));
     }
 }
