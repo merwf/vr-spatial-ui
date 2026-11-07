@@ -8,16 +8,24 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioSource musicSource;
     [SerializeField] private AudioSource sfxSource;
 
+    // YENİ: SFX kapatılınca birlikte susturulacak diğer kaynaklar
+    // (Canvas'taki, XRButtonFeedback'in kullandığı AudioSource)
+    [SerializeField] private AudioSource[] extraSfxSources;
+
     [Header("Clips")]
-    [SerializeField] private AudioClip uiClickSfx;     // Normal buton sesi
-    [SerializeField] private AudioClip quitSfx;        // Çıkış butonu sesi (daha derin / uyarıcı)
-    [SerializeField] private AudioClip sliderTickSfx;  // Slider kayma / tıkırtı sesi
+    [SerializeField] private AudioClip uiClickSfx;
+    [SerializeField] private AudioClip quitSfx;
+    [SerializeField] private AudioClip sliderTickSfx;
 
     [Header("Slider Settings")]
     [SerializeField] private float sliderPitchMin = 0.9f;
     [SerializeField] private float sliderPitchMax = 1.2f;
 
     private float lastSliderSoundTime;
+
+    // YENİ: butonların ikon durumunu okuyabilmesi için
+    public bool IsMusicMuted => musicSource != null && musicSource.mute;
+    public bool IsSfxMuted => sfxSource != null && sfxSource.mute;
 
     private void Awake()
     {
@@ -35,37 +43,38 @@ public class AudioManager : MonoBehaviour
         musicSource.mute = !musicSource.mute;
     }
 
+    // YENİ: artık ekstra kaynakları da birlikte susturuyor
     public void ToggleSFX()
     {
         if (sfxSource == null) return;
-        sfxSource.mute = !sfxSource.mute;
+        bool mute = !sfxSource.mute;
+        sfxSource.mute = mute;
+
+        if (extraSfxSources == null) return;
+        foreach (var source in extraSfxSources)
+            if (source != null) source.mute = mute;
     }
 
-    // Normal butonlar için
     public void PlayClickSound()
     {
         PlayClip(uiClickSfx);
     }
 
-    // Quit butonu için özel ses
     public void PlayQuitSound()
     {
         PlayClip(quitSfx);
     }
 
-    // Slider sürüklendikçe çağrılır (çok sık ses patlamasını engellemek için aralık kısıtlamalı)
     public void PlaySliderSound(float value)
     {
         if (sfxSource == null || sliderTickSfx == null || sfxSource.mute) return;
 
-        // Sesin saniyede 15 kereden fazla tetiklenip gürültü yapmasını önle
         if (Time.unscaledTime - lastSliderSoundTime < 0.06f) return;
         lastSliderSoundTime = Time.unscaledTime;
 
-        // Slider değerine göre (0 - 1) ses tonunu (pitch) hafifçe değiştirerek tatmin edici bir his verir
         sfxSource.pitch = Mathf.Lerp(sliderPitchMin, sliderPitchMax, value);
         sfxSource.PlayOneShot(sliderTickSfx, 0.4f);
-        sfxSource.pitch = 1.0f; // Varsayılan tona geri al
+        sfxSource.pitch = 1.0f;
     }
 
     private void PlayClip(AudioClip clip)
