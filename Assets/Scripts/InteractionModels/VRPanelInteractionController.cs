@@ -9,7 +9,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 /// <summary>
-/// XR ray UI / grab / thumbstick zoom / head-gaze reset / menu toggle
+/// XR ray UI / grab / thumbstick zoom / head-gaze reset / menu toggle / follow mode (auto-manual)
 /// </summary>
 [DisallowMultipleComponent]
 public sealed class VRPanelInteractionController : MonoBehaviour
@@ -99,6 +99,17 @@ public sealed class VRPanelInteractionController : MonoBehaviour
     private Vector3 hiddenVelocity;
     #endregion
 
+    #region Follow Mode
+    // AUTO   = Canvas'taki LazyFollow acik, panel kullaniciyi takip eder. Tutamac ve reset gizlenir.
+    // MANUAL = LazyFollow kapali, panel tutamac (grip) ile tasinir. Mevcut davranis.
+    public enum FollowMode { Manual, Auto }
+
+    [Header("Takip Modu (Auto = LazyFollow, Manual = Grip)")]
+    [SerializeField] private FollowMode followMode = FollowMode.Manual;
+    [SerializeField] private Button followModeButton;
+    [SerializeField] private TMP_Text followModeLabel;
+    #endregion
+
     #region Feedback
     private enum HandleState { Ready, Hover, Grabbed }
     private Color handleTargetColor = new(0.12f, 0.43f, 0.72f, 0.94f);
@@ -140,6 +151,7 @@ public sealed class VRPanelInteractionController : MonoBehaviour
 
         // Mevcut LazyFollow/LazyFollowYawOnly paneli geri çekmesin.
         // Orijinal durumlar saklanır; sahne/prefab dosyası değiştirilmez.
+        // (AUTO modunda SetFollowMode bu orijinal durumlari geri yukler.)
         var behaviours = worldCanvas.GetComponents<MonoBehaviour>();
         var followers = new List<MonoBehaviour>();
         foreach (var behaviour in behaviours)
@@ -174,6 +186,7 @@ public sealed class VRPanelInteractionController : MonoBehaviour
         }
         if (closeMenuButton != null) closeMenuButton.onClick.AddListener(CloseMenu);
         if (openMenuButton != null) openMenuButton.onClick.AddListener(OpenMenu);
+        if (followModeButton != null) followModeButton.onClick.AddListener(ToggleFollowMode);
 
         InitializeGazeCircle();
         ResetMenuPosition();
@@ -192,6 +205,7 @@ public sealed class VRPanelInteractionController : MonoBehaviour
         SetMenuVisible(true);
         if (grabHandleImage != null) handleBaseScale = grabHandleImage.rectTransform.localScale;
         SetHandleState(HandleState.Ready);
+        SetFollowMode(followMode, false);
         SetStatus("MENU HAZIR");
     }
 
@@ -206,6 +220,7 @@ public sealed class VRPanelInteractionController : MonoBehaviour
         }
         if (closeMenuButton != null) closeMenuButton.onClick.RemoveListener(CloseMenu);
         if (openMenuButton != null) openMenuButton.onClick.RemoveListener(OpenMenu);
+        if (followModeButton != null) followModeButton.onClick.RemoveListener(ToggleFollowMode);
         ReleaseLocomotion();
         if (originalFollowers != null)
         {
@@ -221,7 +236,7 @@ public sealed class VRPanelInteractionController : MonoBehaviour
     private void Update()
     {
         AnimateHandle();
-        if (!panelVisible || grabbed || isResetting ||
+        if (!panelVisible || grabbed || isResetting || followMode == FollowMode.Auto ||
             resetGazeCollider == null || headsetCamera == null)
         {
             ClearGaze();
@@ -258,7 +273,8 @@ public sealed class VRPanelInteractionController : MonoBehaviour
         if (!panelVisible)
         {
             // Tekrar aç düğmesi görüş alanında kalsın.
-            ApplyDefaultPose(true);
+            // AUTO modunda bunu zaten LazyFollow yapiyor; ikisi cekismesin.
+            if (followMode == FollowMode.Manual) ApplyDefaultPose(true);
             return;
         }
 
@@ -351,6 +367,10 @@ public sealed class VRPanelInteractionController : MonoBehaviour
     {
         EndGrab();
 
+        // AUTO modunda paneli LazyFollow konumlandiriyor; reset animasyonu onunla cekismesin.
+        if (followMode == FollowMode.Auto)
+            return;
+
         if (worldCanvas == null || headsetCamera == null)
             return;
 
@@ -434,6 +454,56 @@ public sealed class VRPanelInteractionController : MonoBehaviour
         ClearGaze();
 
         SetStatus("RESET | Menu varsayilan konuma getirildi");
+    }
+
+    // ---------------------------------------------------------------
+    // Follow Mode (AUTO / MANUAL)
+    // ---------------------------------------------------------------
+
+    /// <summary>Follow mode butonu bu metodu cagirir: AUTO <-> MANUAL.</summary>
+    public void ToggleFollowMode()
+    {
+        SetFollowMode(followMode == FollowMode.Auto ? FollowMode.Manual : FollowMode.Auto, true);
+    }
+
+    private void SetFollowMode(FollowMode mode, bool announce)
+    {
+        followMode = mode;
+        bool auto = mode == FollowMode.Auto;
+
+        if (auto)
+        {
+            // Tutma veya reset animasyonu devam ediyorsa temizce bitir.
+            EndGrab();
+            ClearGaze();
+            if (resetAnimationCoroutine != null)
+            {
+                StopCoroutine(resetAnimationCoroutine);
+                resetAnimationCoroutine = null;
+                isResetting = false;
+                if (grabHandle != null) grabHandle.enabled = grabHandleWasEnabledBeforeReset;
+            }
+        }
+
+        // LazyFollow: AUTO'da sahnedeki orijinal durumuna doner, MANUAL'da kapali.
+        if (originalFollowers != null)
+        {
+            for (int i = 0; i < originalFollowers.Length; i++)
+                if (originalFollowers[i] != null)
+                    originalFollowers[i].enabled = auto && originalFollowerStates[i];
+        }
+
+        // AUTO modunda tutamac ve reset butonuna gerek yok.
+        if (grabHandle != null) grabHandle.gameObject.SetActive(!auto);
+        if (resetButton != null) resetButton.gameObject.SetActive(!auto);
+
+        if (followModeLabel != null)
+            followModeLabel.text = auto ? "MODE: AUTO" : "MODE: MANUAL";
+
+        if (announce)
+            SetStatus(auto
+                ? "AUTO FOLLOW | Menu seni takip ediyor"
+                : "MANUAL | Tutamaci grip ile tutarak tasi");
     }
 
     private void SetMenuVisible(bool visible)
@@ -545,6 +615,7 @@ public sealed class VRPanelInteractionController : MonoBehaviour
 
     private void OnGrabEnter(SelectEnterEventArgs args)
     {
+        if (followMode == FollowMode.Auto) return;
         if (isResetting || !panelVisible || args.interactorObject == null) return;
         grabbingInteractor = args.interactorObject.transform;
         gripStartInteractorPosition = grabbingInteractor.position;
