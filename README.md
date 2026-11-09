@@ -9,6 +9,7 @@ VR'da **İnsan–Bilgisayar Etkileşimi ve Kullanıcı Deneyimi** konusunu anlat
 ## İçindekiler
 
 - [Kapsam](#kapsam)
+- [Arayüz görselleri](#arayüz-görselleri)
 - [Teknik altyapı](#teknik-altyapı)
 - [Sahne ve işlevler](#sahne-ve-işlevler)
 - [VR Etkileşim Modelleri](#vr-etkileşim-modelleri)
@@ -41,6 +42,94 @@ Panel şu kontrolleri içerir:
 - **MODE: AUTO / MANUAL:** Panelin kullanıcıyı takip edip etmeyeceğini belirler.
 - **Müzik ve ses butonları:** Arka plan müziğini ve efekt seslerini ayrı ayrı açıp kapatır.
 - **Quit:** Onay diyaloğu ile uygulamadan çıkış.
+
+## Arayüz görselleri
+
+Aşağıdaki görseller, demonun kullanım sırasına göre dizilmiştir.
+
+### 1. Sahneye genel bakış
+
+Kullanıcı Ay yüzeyinde başlar. Arka planda uzay skybox'ı ve Dünya küresi bulunur, önünde ise Lunar Interface paneli durur.
+
+![Sahneye genel bakış](docs/media/VRspace.gif)
+
+### 2. Lunar Interface paneli
+
+World-space olarak konumlanmış ana menü. Gravity, Snap Turn, Light Intensity, takip modu, müzik/ses ve Quit kontrollerini tek bir panelde toplar.
+
+![Lunar Interface paneli](docs/media/panel.gif)
+
+### 3. Ray ile hover geri bildirimi
+
+Kontrolcü ışını bir butonun üzerine geldiğinde buton büyür, yazı rengi değişir ve hover sesi çalar. Tıklamada ayrı bir onay sesi duyulur.
+
+![Ray ile hover geri bildirimi](docs/media/hover.gif)
+
+### 4. Yerçekimi: kaya demosu
+
+`Gravity: MOON / EARTH` butonu Unity fizik yerçekimini değiştirir. Kayaların düşüş ve hareket hızı seçilen değere göre farklılaşır.
+
+![Yerçekimi kaya demosu](docs/media/gravityRock.gif)
+
+### 5. Yerçekimi: farklı yerçekiminde hareket
+
+Aynı geçişin Ay ve Dünya değerleri arasındaki farkı daha belirgin gösteren ikinci örnek.
+
+![Farklı yerçekiminde hareket](docs/media/gravityJump.gif)
+
+### 6. Snap Turn
+
+`Snap Turn: ON / OFF` ile dönüş yöntemi değişir. ON durumunda kullanıcı sabit açılarla adım adım döner, OFF durumunda Continuous Turn ile akıcı şekilde döner. Snap Turn, motion sickness riskini azaltan bir konfor seçeneğidir.
+
+![Snap Turn](docs/media/turn.gif)
+
+### 7. Light Intensity
+
+Slider ile sahnedeki yönlü ışığın şiddeti ayarlanır. Slider hareket ettikçe perdesi değişen bir tık sesi çalar.
+
+![Light Intensity slider](docs/media/light.gif)
+
+### 8. Tutamaçla taşıma (Grab)
+
+MANUAL modda panelin üstündeki **TUTAMAÇ** alanı Grip ile tutulup kontrolcüyle taşınabilir. Tutma sırasında joystick yukarı/aşağı hareketiyle panel yaklaştırılır veya uzaklaştırılır.
+
+![Tutamaçla taşıma](docs/media/tutamac.gif)
+
+### 9. Head-gaze ile RESET
+
+Bakış yönü RESET butonunda 2 saniye tutulduğunda butonun merkezinden dışa doğru büyüyen bir daire dolar ve panel varsayılan konumuna döner. Bakış süre dolmadan başka yöne kayarsa ilerleme sıfırlanır.
+
+![Head-gaze ile RESET](docs/media/reset.gif)
+
+### 10. Takip modu (AUTO)
+
+`MODE: AUTO` seçildiğinde panel, kullanıcının bakış yönünü belirli bir gecikmeyle yumuşakça takip eder. Bu modda tutamaç ve RESET gizlenir.
+
+![AUTO takip modu](docs/media/follow.gif)
+
+### 11. Menüyü kapatma ve açma
+
+`MENÜYÜ KAPAT` ana paneli animasyonla gizler. `MENÜYÜ AÇ` butonu görünür kalır ve paneli geri getirir.
+
+![Menüyü kapatma ve açma](docs/media/openMenu.gif)
+
+### 12. Müzik ve ses kontrolleri
+
+Müzik butonu yalnızca arka plan müziğini, ses butonu ise efekt ve buton seslerini kapatır. Her butonun ikonu duruma göre değişir.
+
+![Müzik ve ses kontrolleri](docs/media/sound.gif)
+
+### 13. Quit onay diyaloğu
+
+Güç ikonlu Quit butonu animasyonlu bir onay diyaloğu açar. İptal edildiğinde ana kontrollere geri dönülür.
+
+![Quit onay diyaloğu](docs/media/quit.gif)
+
+### 14. Sahne hiyerarşisi
+
+Unity'deki `SampleScene` hiyerarşisi: XR Origin, Canvas ve panel nesneleri, ışık ve volume ayarları.
+
+![Sahne hiyerarşisi](docs/media/hierarchy.png)
 
 ## Teknik altyapı
 
@@ -213,6 +302,8 @@ Assets/
 ├── Lunar Landscape 3D/                      # Ay yüzeyi paketi
 ├── ParallelCascades/                        # Starfield skybox paketi
 ├── M_Earth.mat, Orbitron-Bold.ttf, ...      # Materyal ve yazı tipi
+docs/
+└── media/                                   # README görselleri ve GIF'leri
 Packages/
 └── manifest.json
 ProjectSettings/
