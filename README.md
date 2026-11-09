@@ -51,19 +51,19 @@ Aşağıdaki görseller, demonun kullanım sırasına göre dizilmiştir.
 
 Kullanıcı Ay yüzeyinde başlar. Arka planda uzay skybox'ı ve Dünya küresi bulunur, önünde ise Lunar Interface paneli durur.
 
-![Sahneye genel bakış](docs/media/VRspace.gif)
+![Sahneye genel bakış](docs/media/VRspace.png)
 
 ### 2. Lunar Interface paneli
 
 World-space olarak konumlanmış ana menü. Gravity, Snap Turn, Light Intensity, takip modu, müzik/ses ve Quit kontrollerini tek bir panelde toplar.
 
-![Lunar Interface paneli](docs/media/panel.gif)
+![Lunar Interface paneli](docs/media/panel.png)
 
 ### 3. Ray ile hover geri bildirimi
 
 Kontrolcü ışını bir butonun üzerine geldiğinde buton büyür, yazı rengi değişir ve hover sesi çalar. Tıklamada ayrı bir onay sesi duyulur.
 
-![Ray ile hover geri bildirimi](docs/media/hover.gif)
+![Ray ile hover geri bildirimi](docs/media/hover.png)
 
 ### 4. Yerçekimi: kaya demosu
 
